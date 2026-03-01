@@ -15,7 +15,8 @@ env/
 .env
 
 # Streamlit
-.streamlit/
+.streamlit/*
+!.streamlit/config.toml
 
 # Jupyter
 .ipynb_checkpoints/

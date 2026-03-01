@@ -115,6 +115,21 @@ header[data-testid="stHeader"] {
 div[data-testid="stDataFrame"] { border-radius: 12px; overflow: hidden; }
 div[data-testid="stMetric"] { background: #fff; border-radius: 12px; padding: 16px;
                                border: 1px solid #e2e8f4; }
+                               
+/* Fix for Input Widgets (Selectbox, NumberInput, etc) */
+div[data-baseweb="select"] > div,
+div[data-baseweb="input"] > div {
+    background-color: #ffffff !important;
+    border: 1px solid #dde3f0 !important;
+    border-radius: 8px !important;
+}
+div[data-baseweb="select"] * { color: #1a1a2e !important; }
+div[data-baseweb="input"] input { color: #1a1a2e !important; }
+div[data-baseweb="popover"] { background-color: #ffffff !important; }
+div[data-baseweb="popover"] li { color: #1a1a2e !important; }
+div[data-baseweb="popover"] li:hover { background-color: #f0f2f8 !important; }
+label[data-testid="stWidgetLabel"] p { color: #475569 !important; font-weight: 600; }
+
 .stButton>button {
     border-radius: 10px !important; font-weight: 700 !important;
     transition: all 0.2s !important;

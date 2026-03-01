@@ -184,6 +184,20 @@ header[data-testid="stHeader"] {
 }
 .qs-text b { color: #1a1a2e; }
 
+/* Fix for Input Widgets (Selectbox, NumberInput, etc) */
+div[data-baseweb="select"] > div,
+div[data-baseweb="input"] > div {
+    background-color: #ffffff !important;
+    border: 1px solid #dde3f0 !important;
+    border-radius: 8px !important;
+}
+div[data-baseweb="select"] * { color: #1a1a2e !important; }
+div[data-baseweb="input"] input { color: #1a1a2e !important; }
+div[data-baseweb="popover"] { background-color: #ffffff !important; }
+div[data-baseweb="popover"] li { color: #1a1a2e !important; }
+div[data-baseweb="popover"] li:hover { background-color: #f0f2f8 !important; }
+label[data-testid="stWidgetLabel"] p { color: #475569 !important; font-weight: 600; }
+
 .footer-note {
     text-align: center;
     color: #94a3b8;
