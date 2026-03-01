@@ -17,11 +17,11 @@ inject_css()
 st.markdown("""
 <div class="page-header">
     <h1>Churn Predictor</h1>
-    <p>Enter an individual customer's details to receive churn probability scores from all 4 models plus an ensemble verdict.</p>
+    <p>Enter an individual customer's details to receive churn probability scores from all 3 models plus an ensemble verdict.</p>
 </div>
 """, unsafe_allow_html=True)
 
-log, dt, rf, gb, minmax = load_saved_models()
+log, dt, rf, minmax = load_saved_models()
 if log is None:
     st.warning("No trained models found. Please train models in Model Training first."); st.stop()
 
@@ -87,13 +87,12 @@ if predict_btn:
         ("Logistic Regression", log),
         ("Decision Tree",       dt),
         ("Random Forest",       rf),
-        ("Gradient Boosting",   gb),
     ]
     probs = {name: m.predict_proba(X_live)[0][1] for name, m in named_models}
 
     st.markdown('<div class="section-title">Prediction Results</div>', unsafe_allow_html=True)
 
-    cols = st.columns(4)
+    cols = st.columns(3)
     for col, (name, prob) in zip(cols, probs.items()):
         is_high   = prob >= threshold
         card_cls  = "result-high" if is_high else "result-low"
@@ -122,17 +121,17 @@ if predict_btn:
 
     ecol1, ecol2, ecol3 = st.columns(3)
     ecol1.metric("Ensemble Probability", f"{avg_prob*100:.1f}%")
-    ecol2.metric("Models Flagging Risk",  f"{votes_high} / 4")
+    ecol2.metric("Models Flagging Risk",  f"{votes_high} / 3")
     ecol3.metric("Threshold",            f"{threshold*100:.0f}%")
 
     st.markdown("---")
     if avg_prob >= threshold:
         st.error(
-            f"**High Churn Risk** — Ensemble average is {avg_prob*100:.1f}% with {votes_high}/4 models agreeing. "
+            f"**High Churn Risk** — Ensemble average is {avg_prob*100:.1f}% with {votes_high}/3 models agreeing. "
             "This customer should be prioritised for a retention intervention."
         )
     else:
         st.success(
-            f"**Low Churn Risk** — Ensemble average is {avg_prob*100:.1f}% with {4 - votes_high}/4 models predicting retention. "
+            f"**Low Churn Risk** — Ensemble average is {avg_prob*100:.1f}% with {3 - votes_high}/3 models predicting retention. "
             "This customer appears satisfied and is unlikely to leave."
         )
