@@ -17,11 +17,11 @@ inject_css()
 st.markdown("""
 <div class="page-header">
     <h1>Churn Predictor</h1>
-    <p>Enter an individual customer's details to instantly receive a churn probability score from both models.</p>
+    <p>Enter an individual customer's details to receive churn probability scores from all 4 models plus an ensemble verdict.</p>
 </div>
 """, unsafe_allow_html=True)
 
-log, dt, minmax = load_saved_models()
+log, dt, rf, gb, minmax = load_saved_models()
 if log is None:
     st.warning("No trained models found. Please train models in Model Training first."); st.stop()
 
@@ -61,7 +61,7 @@ with c3:
     balance          = st.number_input("Balance ($)",          0.0, value=0.0,     step=1000.0)
     estimated_salary = st.number_input("Estimated Salary ($)", 0.0, value=50000.0, step=1000.0)
 
-predict_btn = st.button("Predict Churn Risk", use_container_width=True, type="primary")
+predict_btn = st.button("Predict Churn Risk", width="stretch", type="primary")
 
 if predict_btn:
     input_data = pd.DataFrame([{
@@ -81,39 +81,58 @@ if predict_btn:
             input_data[col] = np.log1p(input_data[col])
 
     ordered_cols = list(minmax.feature_names_in_)
-    input_data   = input_data[ordered_cols]
-    X_live = pd.DataFrame(minmax.transform(input_data), columns=ordered_cols)
+    X_live = pd.DataFrame(minmax.transform(input_data[ordered_cols]), columns=ordered_cols)
 
-    lr_prob = log.predict_proba(X_live)[0][1]
-    dt_prob = dt.predict_proba(X_live)[0][1]
+    named_models = [
+        ("Logistic Regression", log),
+        ("Decision Tree",       dt),
+        ("Random Forest",       rf),
+        ("Gradient Boosting",   gb),
+    ]
+    probs = {name: m.predict_proba(X_live)[0][1] for name, m in named_models}
 
     st.markdown('<div class="section-title">Prediction Results</div>', unsafe_allow_html=True)
 
-    col1, col2 = st.columns(2)
-    for col, prob, label in [(col1, lr_prob, "Logistic Regression"),
-                              (col2, dt_prob, "Decision Tree")]:
+    cols = st.columns(4)
+    for col, (name, prob) in zip(cols, probs.items()):
         is_high   = prob >= threshold
         card_cls  = "result-high" if is_high else "result-low"
-        risk_lbl  = "HIGH RISK — Likely to Churn" if is_high else "LOW RISK — Likely to Stay"
+        risk_lbl  = "HIGH RISK" if is_high else "LOW RISK"
         bar_color = "#f43f5e" if is_high else "#22c55e"
 
         with col:
             st.markdown(f"""
-            <div class="result-card {card_cls}">
-                <div class="result-pct">{prob*100:.1f}%</div>
-                <div class="result-label"><b>{label}</b><br>{risk_lbl}</div>
+            <div class="result-card {card_cls}" style="padding:20px;">
+                <div class="result-pct" style="font-size:2rem;">{prob*100:.1f}%</div>
+                <div class="result-label"><b>{name}</b><br>{risk_lbl}</div>
             </div>
             <div class="gauge-bg">
                 <div class="gauge-fill" style="width:{prob*100:.1f}%; background:{bar_color};"></div>
             </div>
-            <p style="text-align:center; font-size:0.78rem; color:#94a3b8; margin-top:4px;">
-                Threshold: {threshold*100:.0f}% &nbsp;|&nbsp; Score: {prob*100:.1f}%
+            <p style="text-align:center; font-size:0.75rem; color:#94a3b8; margin-top:4px;">
+                Threshold: {threshold*100:.0f}%
             </p>
             """, unsafe_allow_html=True)
 
-    avg_prob = (lr_prob + dt_prob) / 2
+    # ── Ensemble verdict ──────────────────────────────────────────────────────
+    st.markdown('<div class="section-title">Ensemble Verdict</div>', unsafe_allow_html=True)
+
+    avg_prob = np.mean(list(probs.values()))
+    votes_high = sum(1 for p in probs.values() if p >= threshold)
+
+    ecol1, ecol2, ecol3 = st.columns(3)
+    ecol1.metric("Ensemble Probability", f"{avg_prob*100:.1f}%")
+    ecol2.metric("Models Flagging Risk",  f"{votes_high} / 4")
+    ecol3.metric("Threshold",            f"{threshold*100:.0f}%")
+
     st.markdown("---")
     if avg_prob >= threshold:
-        st.error(f"Ensemble Average: {avg_prob*100:.1f}% — This customer should be flagged for a retention intervention.")
+        st.error(
+            f"**High Churn Risk** — Ensemble average is {avg_prob*100:.1f}% with {votes_high}/4 models agreeing. "
+            "This customer should be prioritised for a retention intervention."
+        )
     else:
-        st.success(f"Ensemble Average: {avg_prob*100:.1f}% — This customer appears satisfied and is unlikely to churn.")
+        st.success(
+            f"**Low Churn Risk** — Ensemble average is {avg_prob*100:.1f}% with {4 - votes_high}/4 models predicting retention. "
+            "This customer appears satisfied and is unlikely to leave."
+        )

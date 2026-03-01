@@ -64,10 +64,10 @@ for col, num, lbl in [
         st.markdown(f'<div class="stat-card"><div class="stat-num">{num}</div><div class="stat-lbl">{lbl}</div></div>', unsafe_allow_html=True)
 
 st.markdown('<div class="section-title">Data Preview</div>', unsafe_allow_html=True)
-st.dataframe(raw_df.head(15), use_container_width=True)
+st.dataframe(raw_df.head(15), width="stretch")
 
 with st.expander("Descriptive Statistics"):
-    st.dataframe(raw_df.describe(), use_container_width=True)
+    st.dataframe(raw_df.describe(), width="stretch")
 
 st.markdown('<div class="section-title">Exploratory Data Analysis</div>', unsafe_allow_html=True)
 

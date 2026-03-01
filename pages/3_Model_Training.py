@@ -15,7 +15,7 @@ inject_css()
 st.markdown("""
 <div class="page-header">
     <h1>Model Training</h1>
-    <p>Run the full 6-phase ML pipeline to train Logistic Regression and Decision Tree classifiers on your dataset.</p>
+    <p>Run the full ML pipeline to train 4 classifiers with tuned hyperparameters and balanced class weights.</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -34,15 +34,16 @@ with st.sidebar:
     threshold = st.slider("Decision Threshold", 0.0, 1.0, 0.5, 0.05)
     st.markdown("---")
 
+# ── Pipeline overview ──────────────────────────────────────────────────────────
 st.markdown('<div class="section-title">Pipeline Overview</div>', unsafe_allow_html=True)
 
 phases = [
-    ("Phase 1", "Load Data",     "Read CSV, drop RowNumber / CustomerId / Surname"),
-    ("Phase 2", "Imputation",    "Mean for numerics · Most-Frequent for categoricals"),
-    ("Phase 3", "Encoding",      "LabelEncoder on Geography and Gender"),
-    ("Phase 4", "Scaling",       "log1p transform + MinMaxScaler to [0, 1]"),
-    ("Phase 5", "Training",      "70/30 split · Logistic Regression + Decision Tree"),
-    ("Phase 6", "Serialisation", "joblib dumps artifacts to models/"),
+    ("Phase 1", "Load Data",        "Read CSV, drop RowNumber / CustomerId / Surname"),
+    ("Phase 2", "Imputation",       "Mean for numerics · Most-Frequent for categoricals"),
+    ("Phase 3", "Encoding",         "LabelEncoder on Geography and Gender"),
+    ("Phase 4", "Scaling",          "log1p transform + MinMaxScaler to [0, 1]"),
+    ("Phase 5", "Training (x4)",    "Stratified 70/30 split · 4 classifiers with tuned hyperparams"),
+    ("Phase 6", "Serialisation",    "joblib dumps 4 .pkl artifacts to models/"),
 ]
 
 c1, c2 = st.columns(2)
@@ -51,57 +52,62 @@ for i, (badge, title, desc) in enumerate(phases):
     with col:
         st.markdown(f'<div class="pipeline-step"><b>[{badge}] {title}</b> — {desc}</div>', unsafe_allow_html=True)
 
+
+# ── Train ──────────────────────────────────────────────────────────────────────
 st.markdown('<div class="section-title">Train Models</div>', unsafe_allow_html=True)
 
-if st.button("Start Training", use_container_width=True, type="primary"):
+if st.button("Start Training", width="stretch", type="primary"):
     progress = st.progress(0, text="Loading data...")
     with open(dataset_path, "rb") as f:
         raw_df, df = load_data(f)
-    progress.progress(15, "Cleaning data...")
+    progress.progress(10, "Cleaning data...")
 
     if 'Exited' not in df.columns:
         st.error("Dataset must contain an 'Exited' column."); st.stop()
 
     X, Y, num_cols, cat_cols = clean_data(df)
-    progress.progress(35, "Encoding features...")
+    progress.progress(25, "Encoding features...")
     X, encoders = encode_features(X, cat_cols)
-    progress.progress(50, "Scaling features...")
+    progress.progress(40, "Scaling features...")
     X, minmax = scale_features(X, num_cols)
-    progress.progress(65, "Training models...")
+    progress.progress(55, "Training Logistic Regression + Decision Tree...")
 
-    log, dt, x_train, x_test, y_train, y_test = train_models(X, Y)
+    log, dt, rf, gb, x_train, x_test, y_train, y_test = train_models(X, Y)
     progress.progress(85, "Saving artifacts...")
-    save_models(log, dt, minmax)
+    save_models(log, dt, rf, gb, minmax)
     progress.progress(100, "Complete!")
 
     st.session_state['trained']     = True
     st.session_state['log_metrics'] = evaluate_model(log, x_train, y_train, x_test, y_test, threshold)
     st.session_state['dt_metrics']  = evaluate_model(dt,  x_train, y_train, x_test, y_test, threshold)
+    st.session_state['rf_metrics']  = evaluate_model(rf,  x_train, y_train, x_test, y_test, threshold)
+    st.session_state['gb_metrics']  = evaluate_model(gb,  x_train, y_train, x_test, y_test, threshold)
     st.session_state['threshold']   = threshold
     st.session_state['total_users'] = len(raw_df)
 
-    st.success("Models trained and saved to models/ successfully!")
+    st.success("All 4 models trained and saved to models/ successfully!")
 
-    lr, dt_m = st.session_state['log_metrics'], st.session_state['dt_metrics']
     st.markdown('<div class="section-title">Quick Results</div>', unsafe_allow_html=True)
 
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown("**Logistic Regression**")
-        m1, m2, m3, m4 = st.columns(4)
-        m1.metric("Accuracy",  f"{lr['Accuracy']:.3f}")
-        m2.metric("Precision", f"{lr['Precision']:.3f}")
-        m3.metric("Recall",    f"{lr['Recall']:.3f}")
-        m4.metric("F1 Score",  f"{lr['F1 Score']:.3f}")
-    with col2:
-        st.markdown("**Decision Tree**")
-        m1, m2, m3, m4 = st.columns(4)
-        m1.metric("Accuracy",  f"{dt_m['Accuracy']:.3f}")
-        m2.metric("Precision", f"{dt_m['Precision']:.3f}")
-        m3.metric("Recall",    f"{dt_m['Recall']:.3f}")
-        m4.metric("F1 Score",  f"{dt_m['F1 Score']:.3f}")
+    model_results = [
+        ("Logistic Regression",  st.session_state['log_metrics']),
+        ("Decision Tree",        st.session_state['dt_metrics']),
+        ("Random Forest",        st.session_state['rf_metrics']),
+        ("Gradient Boosting",    st.session_state['gb_metrics']),
+    ]
 
-    st.markdown("Navigate to **Performance** in the sidebar for full analysis.")
+    col1, col2 = st.columns(2)
+    for i, (name, res) in enumerate(model_results):
+        col = col1 if i % 2 == 0 else col2
+        with col:
+            st.markdown(f"**{name}**")
+            m1, m2, m3, m4 = st.columns(4)
+            m1.metric("Accuracy",  f"{res['Accuracy']:.3f}")
+            m2.metric("Precision", f"{res['Precision']:.3f}")
+            m3.metric("Recall",    f"{res['Recall']:.3f}")
+            m4.metric("F1 Score",  f"{res['F1 Score']:.3f}")
+
+    st.markdown("Navigate to **Performance** in the sidebar for full comparison and charts.")
 
 elif st.session_state.get('trained'):
     st.success("Models are already trained. Navigate to Performance to review results, or click above to retrain.")

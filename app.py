@@ -220,7 +220,7 @@ st.markdown("""
 
 st.markdown('<div class="section-title">System Dashboard</div>', unsafe_allow_html=True)
 
-log, dt, minmax = load_saved_models()
+log, dt, rf, gb, minmax = load_saved_models()
 models_ready = log is not None
 
 col1, col2, col3, col4 = st.columns(4)
@@ -229,7 +229,7 @@ with col1:
     st.markdown(f"""
     <div class="metric-card">
         <div class="metric-label">Models Trained</div>
-        <div class="metric-value">{"2" if models_ready else "0"}</div>
+        <div class="metric-value">{"4" if models_ready else "0"}</div>
         <span class="metric-delta {"delta-green" if models_ready else "delta-blue"}">
             {"Ready to predict" if models_ready else "Train first"}
         </span>
