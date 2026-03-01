@@ -32,17 +32,15 @@ def train_models(X, Y):
 
     models = {
         "lr": LogisticRegression(
-            C=0.5,
+            C=10.0,
             max_iter=2000,
-            class_weight="balanced",
             solver="lbfgs",
             random_state=42,
         ),
         "dt": DecisionTreeClassifier(
-            max_depth=10,
-            min_samples_split=12,
-            min_samples_leaf=6,
-            class_weight="balanced",
+            max_depth=5,
+            min_samples_split=15,
+            min_samples_leaf=4,
             random_state=42,
         ),
         "rf": RandomForestClassifier(
