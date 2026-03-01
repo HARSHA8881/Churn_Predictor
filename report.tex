@@ -1,0 +1,61 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\title{\textbf{Intro to GenAI Capstone Project (Milestone 1) \\ A Supervised Machine Learning Framework for Customer Churn Prediction}}
+\author{Team Name: [Your Team Name] \\ \textbf{Institution:} NST Sonipat \\ \textbf{Instructor:} Bipul Shahi}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Abstract}
+Customer churn is a critical issue for modern financial institutions, as acquiring new customers is significantly more expensive than retaining existing ones. This report details the development of an automated, end-to-end Classical Machine Learning framework capable of predicting the likelihood of bank customers exiting based on historical behavior and demographic data. 
+
+\section{Problem Statement}
+"SafeBank" currently processes retention decisions manually, which is highly inefficient and unscalable. The objective of this project is to automate the identification of at-risk customers by learning from past tabular data using strictly classical machine learning pipelines, completely devoid of Generative AI or LLMs.
+
+\section{Data Description}
+The dataset utilized is the "Bank Customer Churn Dataset." It comprises records containing both demographic features (Age, Gender, Geography) and financial behavior metrics (Credit Score, Balance, Number of Products, Tenure). The target variable is \texttt{Exited}, a binary indicator where 1 denotes a churned customer and 0 denotes retention. Irrelevant identifiers (RowNumber, CustomerId, Surname) were purged pre-analysis.
+
+\section{EDA Process (Exploratory Data Analysis)}
+A deep exploratory analysis was conducted via a custom Streamlit Dashboard prior to modeling:
+\begin{itemize}
+    \item \textbf{Target Distribution:} A severe class imbalance was noted, with approximately 20\% churned versus 80\% retained customers.
+    \item \textbf{Geographical Disparity:} Bar charts illustrated that specific regions (e.g., Germany) possessed proportionally higher churn rates compared to others.
+    \item \textbf{Correlation Analysis:} A seaborn heatmap revealed positive correlations between customer Age/Balance and their likelihood of exiting the bank.
+\end{itemize}
+
+\section{Methodology \& Pipeline Architecture}
+The project enforces a strict 6-Phase machine learning pipeline derived from industry standards:
+\begin{enumerate}
+    \item \textbf{Data Ingestion:} Tabular isolation via the Pandas library.
+    \item \textbf{Imputation:} Missing values mitigated using Scikit-Learn's \texttt{SimpleImputer} (mode for categorical, mean for continuous variables).
+    \item \textbf{Encoding:} Textual categories converted to numerical formats via \texttt{LabelEncoder}.
+    \item \textbf{Scaling \& Transformations:} Continuous variables containing broad numeric ranges (e.g., Balance) were squashed via Logarithmic Transformation (\texttt{np.log1p}) and subsequently normalized utilizing \texttt{MinMaxScaler}.
+    \item \textbf{Model Training:} Two distinct algorithms were trained on a 70/30 split: Logistic Regression (linear boundary) and Decision Tree Classifier (non-linear boundary).
+    \item \textbf{Serialization:} Models and scalers were securely deployed using \texttt{joblib}.
+\end{enumerate}
+
+\section{Key Sub-Features Developed}
+\begin{itemize}
+    \item \textbf{Single-Customer Inference API:} A Streamlit sidebar form that actively captures individual user traits and passes them directly through the live loaded pipeline.
+    \item \textbf{EDA Analytics Dashboard:} Live visualizations built using Matplotlib.
+    \item \textbf{Business Impact Calculator:} Algorithms mapping False Positives and True Positives to net-revenue logic, proving business viability.
+\end{itemize}
+
+\section{Evaluation \& Optimization}
+The models were evaluated beyond simple Accuracy, prioritizing the \textbf{F1-Score}, Precision, and Recall to account for the heavy class imbalance observed during EDA. Further evaluation elements included Cross-Validation tracking, Confusion Matrices, and ROC curve generation to contrast true positive rates against false positive rates dynamically.
+
+\section{Team Contribution}
+\begin{itemize}
+    \item \textbf{Member 1:} [Name] - Pipeline Architecture, Data Imputation, and Model Serialization.
+    \item \textbf{Member 2:} [Name] - Streamlit UI Design, Interactive Inference API construction.
+    \item \textbf{Member 3:} [Name] - Exploratory Data Analysis, Metrics Generation, Visual Plotting.
+    \item \textbf{Member 4:} [Name] - Business Logic formulation, README construction, and Deployment operations.
+\end{itemize}
+
+\end{document}
