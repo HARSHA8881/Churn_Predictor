@@ -2,7 +2,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import (accuracy_score, precision_score, recall_score,
                              f1_score, confusion_matrix, roc_curve, auc)
 import joblib
@@ -13,7 +13,7 @@ MODELS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "models")
 LR_PATH  = os.path.join(MODELS_DIR, "logistic_regression.pkl")
 DT_PATH  = os.path.join(MODELS_DIR, "decision_tree.pkl")
 RF_PATH  = os.path.join(MODELS_DIR, "random_forest.pkl")
-GB_PATH  = os.path.join(MODELS_DIR, "gradient_boosting.pkl")
+
 SCALER_PATH = os.path.join(MODELS_DIR, "minmax_scaler.pkl")
 
 
@@ -24,7 +24,7 @@ def train_models(X, Y):
     Accuracy improvements applied:
     - class_weight='balanced'  → corrects the ~20% churn class imbalance
     - Tuned max_depth / n_estimators / learning_rate per model
-    - Random Forest + Gradient Boosting added for ensemble power
+    - Random Forest added for ensemble power
     """
     x_train, x_test, y_train, y_test = train_test_split(
         X, Y, train_size=0.7, random_state=42, stratify=Y
@@ -54,30 +54,21 @@ def train_models(X, Y):
             n_jobs=-1,
             random_state=42,
         ),
-        "gb": GradientBoostingClassifier(
-            n_estimators=200,
-            learning_rate=0.05,
-            max_depth=5,
-            min_samples_split=10,
-            min_samples_leaf=5,
-            subsample=0.8,
-            random_state=42,
-        ),
     }
 
     for m in models.values():
         m.fit(x_train, y_train)
 
-    return models["lr"], models["dt"], models["rf"], models["gb"], x_train, x_test, y_train, y_test
+    return models["lr"], models["dt"], models["rf"], x_train, x_test, y_train, y_test
 
 
-def save_models(log, dt, rf, gb, minmax):
+def save_models(log, dt, rf, minmax):
     """Phase 6: Persist all trained artifacts."""
     os.makedirs(MODELS_DIR, exist_ok=True)
     joblib.dump(log,    LR_PATH)
     joblib.dump(dt,     DT_PATH)
     joblib.dump(rf,     RF_PATH)
-    joblib.dump(gb,     GB_PATH)
+
     joblib.dump(minmax, SCALER_PATH)
 
 
@@ -87,11 +78,10 @@ def load_saved_models():
         log    = joblib.load(LR_PATH)
         dt     = joblib.load(DT_PATH)
         rf     = joblib.load(RF_PATH)
-        gb     = joblib.load(GB_PATH)
         minmax = joblib.load(SCALER_PATH)
-        return log, dt, rf, gb, minmax
+        return log, dt, rf, minmax
     except FileNotFoundError:
-        return None, None, None, None, None
+        return None, None, None, None
 
 
 def evaluate_model(model, x_train, y_train, x_test, y_test, threshold=0.5):

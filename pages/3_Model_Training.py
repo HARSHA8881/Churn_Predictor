@@ -15,7 +15,7 @@ inject_css()
 st.markdown("""
 <div class="page-header">
     <h1>Model Training</h1>
-    <p>Run the full ML pipeline to train 4 classifiers with tuned hyperparameters and balanced class weights.</p>
+    <p>Run the full ML pipeline to train 3 classifiers with tuned hyperparameters and balanced class weights.</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -42,8 +42,8 @@ phases = [
     ("Phase 2", "Imputation",       "Mean for numerics · Most-Frequent for categoricals"),
     ("Phase 3", "Encoding",         "LabelEncoder on Geography and Gender"),
     ("Phase 4", "Scaling",          "log1p transform + MinMaxScaler to [0, 1]"),
-    ("Phase 5", "Training (x4)",    "Stratified 70/30 split · 4 classifiers with tuned hyperparams"),
-    ("Phase 6", "Serialisation",    "joblib dumps 4 .pkl artifacts to models/"),
+    ("Phase 5", "Training (x3)",    "Stratified 70/30 split · 3 classifiers with tuned hyperparams"),
+    ("Phase 6", "Serialisation",    "joblib dumps 3 .pkl artifacts to models/"),
 ]
 
 c1, c2 = st.columns(2)
@@ -72,20 +72,19 @@ if st.button("Start Training", width="stretch", type="primary"):
     X, minmax = scale_features(X, num_cols)
     progress.progress(55, "Training Logistic Regression + Decision Tree...")
 
-    log, dt, rf, gb, x_train, x_test, y_train, y_test = train_models(X, Y)
+    log, dt, rf, x_train, x_test, y_train, y_test = train_models(X, Y)
     progress.progress(85, "Saving artifacts...")
-    save_models(log, dt, rf, gb, minmax)
+    save_models(log, dt, rf, minmax)
     progress.progress(100, "Complete!")
 
     st.session_state['trained']     = True
     st.session_state['log_metrics'] = evaluate_model(log, x_train, y_train, x_test, y_test, threshold)
     st.session_state['dt_metrics']  = evaluate_model(dt,  x_train, y_train, x_test, y_test, threshold)
     st.session_state['rf_metrics']  = evaluate_model(rf,  x_train, y_train, x_test, y_test, threshold)
-    st.session_state['gb_metrics']  = evaluate_model(gb,  x_train, y_train, x_test, y_test, threshold)
     st.session_state['threshold']   = threshold
     st.session_state['total_users'] = len(raw_df)
 
-    st.success("All 4 models trained and saved to models/ successfully!")
+    st.success("All 3 models trained and saved to models/ successfully!")
 
     st.markdown('<div class="section-title">Quick Results</div>', unsafe_allow_html=True)
 
@@ -93,7 +92,6 @@ if st.button("Start Training", width="stretch", type="primary"):
         ("Logistic Regression",  st.session_state['log_metrics']),
         ("Decision Tree",        st.session_state['dt_metrics']),
         ("Random Forest",        st.session_state['rf_metrics']),
-        ("Gradient Boosting",    st.session_state['gb_metrics']),
     ]
 
     col1, col2 = st.columns(2)

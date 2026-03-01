@@ -234,7 +234,7 @@ st.markdown("""
 
 st.markdown('<div class="section-title">System Dashboard</div>', unsafe_allow_html=True)
 
-log, dt, rf, gb, minmax = load_saved_models()
+log, dt, rf, minmax = load_saved_models()
 models_ready = log is not None
 
 col1, col2, col3, col4 = st.columns(4)
@@ -243,7 +243,7 @@ with col1:
     st.markdown(f"""
     <div class="metric-card">
         <div class="metric-label">Models Trained</div>
-        <div class="metric-value">{"4" if models_ready else "0"}</div>
+        <div class="metric-value">{"3" if models_ready else "0"}</div>
         <span class="metric-delta {"delta-green" if models_ready else "delta-blue"}">
             {"Ready to predict" if models_ready else "Train first"}
         </span>
@@ -277,10 +277,10 @@ st.markdown('<div class="section-title">Quick Start Guide</div>', unsafe_allow_h
 
 steps = [
     ("Dataset Explorer",  "Upload your bank customer CSV to preview the data and explore key EDA visualisations — churn distributions, geography breakdowns and correlation heatmaps."),
-    ("Model Training",    "Go to <b>Model Training</b> to run the full 6-phase ML pipeline and train both Logistic Regression and Decision Tree models with a single click."),
+    ("Model Training",    "Go to <b>Model Training</b> to run the full 6-phase ML pipeline and train 3 classifiers with a single click."),
     ("Performance",       "Switch to <b>Performance</b> to analyse confusion matrices, ROC curves, feature importance, and compare model metrics side-by-side."),
     ("Business Impact",   "Inside <b>Performance</b>, use the <b>Business Impact</b> tab to translate ML metrics into real revenue figures — revenue saved vs. intervention cost."),
-    ("Churn Predictor",   "Open <b>Churn Predictor</b>, fill in an individual customer's profile, and instantly see the churn probability from both models plus an ensemble verdict."),
+    ("Churn Predictor",   "Open <b>Churn Predictor</b>, fill in an individual customer's profile, and instantly see the churn probability from all models plus an ensemble verdict."),
 ]
 
 for i, (title, desc) in enumerate(steps, 1):

@@ -20,12 +20,12 @@ inject_css()
 st.markdown("""
 <div class="page-header">
     <h1>Performance</h1>
-    <p>Compare all 4 models — confusion matrices, ROC curves, feature importance, and business impact.</p>
+    <p>Compare all 3 models — confusion matrices, ROC curves, feature importance, and business impact.</p>
 </div>
 """, unsafe_allow_html=True)
 
 # ── Load ───────────────────────────────────────────────────────────────────────
-log, dt, rf, gb, minmax = load_saved_models()
+log, dt, rf, minmax = load_saved_models()
 if log is None:
     st.warning("No trained models found. Please go to Model Training first."); st.stop()
 
@@ -51,13 +51,12 @@ all_models = [
     ("Logistic Regression", log),
     ("Decision Tree",       dt),
     ("Random Forest",       rf),
-    ("Gradient Boosting",   gb),
 ]
 results = {name: evaluate_model(m, x_train, y_train, x_test, y_test, threshold)
            for name, m in all_models}
 
 FIG_BG = '#ffffff'
-COLORS = ['#4361ee', '#f72585', '#00d296', '#f4a261']
+COLORS = ['#4361ee', '#f72585', '#00d296']
 
 # ── Tabs ───────────────────────────────────────────────────────────────────────
 tab1, tab2, tab3 = st.tabs([" Model Comparison ", " Charts ", " Business Impact "])
@@ -93,7 +92,7 @@ with tab1:
 
 # ─── Tab 2 ────────────────────────────────────────────────────────────────────
 with tab2:
-    # ROC curves - all 4 on one chart
+    # ROC curves - all 3 on one chart
     st.markdown('<div class="section-title">ROC Curves</div>', unsafe_allow_html=True)
     fig_roc, ax_roc = plt.subplots(figsize=(7, 5), facecolor=FIG_BG)
     ax_roc.set_facecolor(FIG_BG)
@@ -110,7 +109,7 @@ with tab2:
 
     # Confusion matrices - 2x2 grid
     st.markdown('<div class="section-title">Confusion Matrices</div>', unsafe_allow_html=True)
-    fig_cm, axes = plt.subplots(1, 4, figsize=(16, 4), facecolor=FIG_BG)
+    fig_cm, axes = plt.subplots(1, 3, figsize=(14, 4), facecolor=FIG_BG)
     for ax, (name, res) in zip(axes, results.items()):
         sns.heatmap(res['Confusion Matrix'], annot=True, fmt='d',
                     cmap='Blues', ax=ax, cbar=False, linewidths=1, linecolor='white')
@@ -120,26 +119,25 @@ with tab2:
     plt.tight_layout()
     st.pyplot(fig_cm)
 
-    # Feature importance - RF and GB side by side
+    # Feature importance - RF only
     st.markdown('<div class="section-title">Feature Importance</div>', unsafe_allow_html=True)
-    fi_col1, fi_col2 = st.columns(2)
+    fi_col1, _ = st.columns([1, 1])
 
-    for col, model, name in [(fi_col1, rf, "Random Forest"), (fi_col2, gb, "Gradient Boosting")]:
-        with col:
-            try:
-                feat_df = pd.DataFrame({
-                    'Feature': X.columns,
-                    'Importance': model.feature_importances_
-                }).sort_values('Importance', ascending=False)
-                fig_fi, ax_fi = plt.subplots(figsize=(5, 4), facecolor=FIG_BG)
-                ax_fi.set_facecolor(FIG_BG)
-                sns.barplot(x='Importance', y='Feature', data=feat_df, ax=ax_fi, color='#4361ee')
-                ax_fi.set_title(name, fontweight='bold', fontsize=10)
-                for spine in ax_fi.spines.values(): spine.set_color('#e2e8f4')
-                plt.tight_layout()
-                st.pyplot(fig_fi)
-            except Exception:
-                st.warning(f"Could not extract feature importance for {name}.")
+    with fi_col1:
+        try:
+            feat_df = pd.DataFrame({
+                'Feature': X.columns,
+                'Importance': rf.feature_importances_
+            }).sort_values('Importance', ascending=False)
+            fig_fi, ax_fi = plt.subplots(figsize=(5, 4), facecolor=FIG_BG)
+            ax_fi.set_facecolor(FIG_BG)
+            sns.barplot(x='Importance', y='Feature', data=feat_df, ax=ax_fi, color='#4361ee')
+            ax_fi.set_title("Random Forest", fontweight='bold', fontsize=10)
+            for spine in ax_fi.spines.values(): spine.set_color('#e2e8f4')
+            plt.tight_layout()
+            st.pyplot(fig_fi)
+        except Exception:
+            st.warning("Could not extract feature importance for Random Forest.")
 
 # ─── Tab 3 ────────────────────────────────────────────────────────────────────
 with tab3:
@@ -157,7 +155,7 @@ with tab3:
         cost = (tp + fp) * cost_campaign
         return tp, rev, cost, rev - cost
 
-    cols = st.columns(4)
+    cols = st.columns(3)
     for col, (name, res) in zip(cols, results.items()):
         tp, rev, cost, net = impact(res['Confusion Matrix'])
         with col:
